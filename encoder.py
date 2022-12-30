@@ -16,26 +16,26 @@ onlyfiles = [f_ for f_ in listdir(annotation_dir) if isfile(join(annotation_dir,
 # onlyfiles_3 = onlyfiles[2*len(onlyfiles)//5:3*len(onlyfiles)//5]
 # onlyfiles_4 = onlyfiles[3*len(onlyfiles)//5:4*len(onlyfiles)//5]
 # onlyfiles_5 = onlyfiles[4*len(onlyfiles)//5:5*len(onlyfiles)//5]
-for files in onlyfiles:
-    files_ = files[0:-4]+'pkl'
+# for files = "Data/annotations/instances_val2017.json":
+files = "captions_train2017.json"
+files_ = files[0:-4]+'pkl'
+print(files_)
+if not os.path.exists(join(encoded_vector_dir,files_)):
+    with open(join(annotation_dir,files)) as f:
+        print(join(annotation_dir,files))
+        captions = f.read().split(',')
+        f.close()
+    captions = [cap for cap in captions if len(cap.strip()) > 0]
+    
+    try:
+        caption_vectors = skipthoughts.encode(model, captions)
+    except:
+        # with open(join(garbage,files), mode='w') as myfile:
+        #     myfile.write(' ')
+        pass
     print(files_)
-    if not os.path.exists(join(encoded_vector_dir,files_)):
-        with open(join(annotation_dir,files)) as f:
-            print(join(annotation_dir,files))
-            captions = f.read().split(',')
-            f.close()
-        captions = [cap for cap in captions if len(cap.strip()) > 0]
-        
-        try:
-            caption_vectors = skipthoughts.encode(model, captions)
-        except:
-            # with open(join(garbage,files), mode='w') as myfile:
-            #     myfile.write(' ')
-            continue
-        print(files_)
-
-        with open(join(encoded_vector_dir,files_), mode='wb+') as myfile:
-            pickle.dump(caption_vectors, myfile)
-            myfile.close()
-    else:
-        print("skipped")
+    with open(join(encoded_vector_dir,files_), mode='wb+') as myfile:
+        pickle.dump(caption_vectors, myfile)
+        myfile.close()
+else:
+    print("skipped")
