@@ -18,13 +18,13 @@ lam=2.0 #divergence loss lagrange multiplier
 #Function to generate a batch of images and corresponding encoded sentences tensor
 def generate_cub_batch(batch_size):
     batch=random.sample(dataset,batch_size) #Sample from images at random
-    real_images=np.empty(shape=[batch_size,64,64,3]) #For reading groundtruth images
+    real_images=np.empty(shape=[batch_size,480,640,3]) #For reading groundtruth images
     encoded_sentence=np.empty(shape=[batch_size,4800]) #For reading encoded sentences
     for i in range(len(batch)):
-        real_images[i]=plt.imread('Data/train2017'+batch[i]+'.jpg')
-        sentence_list=np.load('Data/encoded_vector'+batch[i]+'.npy')
+        real_images[i]=plt.imread('Data/train2017/'+batch[i])
+        sentence_list=np.load('/media/data2/encoded_vector/'+batch[i])
         encoded_sentence[i]=sentence_list[random.randint(0,np.shape(sentence_list)[0]-1)]
-    return real_images,encoded_sentence
+    return real_images, encoded_sentence
 
 #Setting up GPU parameters
 config = tf.compat.v1.ConfigProto()
@@ -87,7 +87,6 @@ def Generator(batch_size,z_len,encoded_sentences_tensor,reuse_flag,training_flag
         g_a5=tf.nn.conv2d_transpose(g_a4,g_w5,output_shape=[batch_size,64,64,3],strides=[1,2,2,1],padding='SAME')+g_b5
 
         return tf.nn.sigmoid(g_a5),g_mu_a_0,g_sd_a_0
-
 
 #Discriminator Network
 def Discriminator(image_tensor,encoded_sentences_tensor,reuse_flag):
