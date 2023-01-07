@@ -101,7 +101,7 @@ print('''\n---------------------------------------------------------------------
 --------------------------------------------------------------------------------\n''')
 
 
-EPOCHS = 50
+EPOCHS = 100
 noise_dim = 100
 num_examples_to_generate = 16
 seed = tf.random.normal([num_examples_to_generate, noise_dim])
@@ -149,12 +149,12 @@ def generate_and_save_images(model, epoch, test_input):
         plt.axis('off')
     plt.savefig('epoch_reports/image_at_epoch_{:04d}.png'.format(epoch))
     plt.draw()
-    plt.show()
+    # plt.show()
 
 print('''\n--------------------------------------------------------------------------------
                                 training initiated
 --------------------------------------------------------------------------------\n''')
-# train(train_dataset, EPOCHS)
+train(train_dataset, EPOCHS)
 checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
 def display_image(epoch_no): return Image.open('epoch_reports/image_at_epoch_{:04d}.png'.format(epoch_no))
