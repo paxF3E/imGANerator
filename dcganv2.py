@@ -10,7 +10,7 @@ beta=0.3 #Leak Factor
 keep_prob=0.7 #Dropout layer parameter
 noise_length=100 #Noise vector length
 batch_size=128 # Batch Size for training
-dataset=open('Data/imglist.txt','r').read().splitlines() #List of all images
+dataset = open('Data/trainimglist.txt').read().splitlines()
 epoch=1 #current training iteration
 epochs=255000 #upper limit to the iterations
 lam=2.0 #divergence loss lagrange multiplier
@@ -21,7 +21,7 @@ def generate_cub_batch(batch_size):
     real_images=np.empty(shape=[batch_size,480,640,3]) #For reading groundtruth images
     encoded_sentence=np.empty(shape=[batch_size,4800]) #For reading encoded sentences
     for i in range(len(batch)):
-        real_images[i]=plt.imread('Data/train2017/'+batch[i])
+        real_images[i]=plt.imreadriable('Data/train2017/'+batch[i])
         sentence_list=np.load('/media/data2/encoded_vector/'+batch[i])
         encoded_sentence[i]=sentence_list[random.randint(0,np.shape(sentence_list)[0]-1)]
     return real_images, encoded_sentence
@@ -175,6 +175,7 @@ tvars = tf.compat.v1.trainable_variables()
 d_vars = [var for var in tvars if 'd_' in var.name]
 g_vars = [var for var in tvars if 'g_' in var.name]
 var_names=[var.name for var in tf.compat.v1.trainable_variables()]
+print(f'''\n\n{var_names}\n\n''')
 
 #Defining optimizers
 update_ops=tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)

@@ -1,0 +1,4 @@
+- large JSONs were processed to extract the actual text annotations for encoding with skipthoughts
+- encoding entire JSONs in parent directory `..` led to memory leak and excessive execution time
+- every JSON for `{[caption, stuff, instances]x[train, val]}` was split on the basis of immediate children
+- then they were readable and those with vectorizable/encodable text were moved to `.`

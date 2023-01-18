@@ -1,0 +1,2 @@
+- here contains dictionaries and vocab for skipthoughts encoder
+- can be downloaded from home repository of skipthoughts

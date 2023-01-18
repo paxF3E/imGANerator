@@ -1,0 +1,5 @@
+- encoding the entire `.json` annotations would be difficult to sample the batches of data later on
+- now, taking each image from both train and val set, loading the respective annotations/captions using `pycocotools` subsequently encoding the captions for each image
+- now, say we have images `1.png`, `2.png`, `3.png`, with their encoded captions `1.npy`, `2.npy`, `3.npy` for the entire data set
+- both training and validation imageset is listed in `trainimglist.txt` and `valimglist.txt` respectively
+- in `dcganimp1.py` with this format, batches can be easily sampled
