@@ -21,14 +21,14 @@ def generate_cub_batch(batch_size):
     real_images=np.empty(shape=[batch_size,480,640,3]) #For reading groundtruth images
     encoded_sentence=np.empty(shape=[batch_size,4800]) #For reading encoded sentences
     for i in range(len(batch)):
-        real_images[i]=plt.imreadriable('Data/train2017/'+batch[i])
-        sentence_list=np.load('/media/data2/encoded_vector/'+batch[i])
+        real_images[i]=plt.imread('Data/train2017/'+batch[i])
+        sentence_list=np.load('Data/encoded_vector/train_annotation/'+batch[i])
         encoded_sentence[i]=sentence_list[random.randint(0,np.shape(sentence_list)[0]-1)]
     return real_images, encoded_sentence
 
 #Setting up GPU parameters
 config = tf.compat.v1.ConfigProto()
-config.gpu_options.allow_growth=True
+# config.gpu_options.allow_growth=True
 config.allow_soft_placement=True
 sess=tf.compat.v1.Session(config=config)
 
@@ -176,13 +176,16 @@ tvars = tf.compat.v1.trainable_variables()
 d_vars = [var for var in tvars if 'd_' in var.name]
 g_vars = [var for var in tvars if 'g_' in var.name]
 var_names=[var.name for var in tf.compat.v1.trainable_variables()]
-print(f'''\n\n{var_names}\n\n''')
+# print(f'''\n\n{var_names}\n\n''')
 
 #Defining optimizers
 update_ops=tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)
 with tf.control_dependencies(update_ops):
     d_trainer=tf.compat.v1.train.AdamOptimizer(25e-6,beta1=0.5).minimize(W_d,var_list=d_vars)
+    print("\n\n\n\n")
+    print(d_trainer)
     g_trainer=tf.compat.v1.train.AdamOptimizer(25e-6,beta1=0.5).minimize(W_g, var_list=g_vars)
+    print(g_trainer)
 
 #Initialize networks and define saver
 sess.run(tf.compat.v1.global_variables_initializer())

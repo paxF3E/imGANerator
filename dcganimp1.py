@@ -197,9 +197,12 @@ variable_names = [v.name for v in tf.compat.v1.trainable_variables()]
 
 update_optimizer = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)
 with tf.control_dependencies(update_optimizer):
-    g_optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=25e-6, beta1=0.5, beta2=0.999).minimize(W_g, var_list=generator_variables)
-    d_optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=25e-6, beta1=0.5, beta2=0.999).minimize(W_d, var_list=discriminator_variables)
-
+    d_optimizer = tf.keras.optimizers.Adam(learning_rate=25e-6, beta_1=0.5).minimize(W_d, var_list=discriminator_variables, tape=tf.GradientTape())
+    g_optimizer = tf.keras.optimizers.Adam(learning_rate=25e-6, beta_1=0.5).minimize(W_g, var_list=generator_variables, tape=tf.GradientTape())
+'''
+    use GradientTape for optimization, as when loss function is provided, it is required.
+    last edit : fixing this optimization failure in above code block
+'''
 
 ## initializing generator and discriminator
 config = tf.compat.v1.ConfigProto()
