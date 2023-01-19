@@ -164,6 +164,7 @@ N_1_n=tf.compat.v1.distributions.Normal(tf.zeros([1,128]),tf.ones([1,128]))
 W_g_kl=tf.reduce_mean(input_tensor=tf.compat.v1.distributions.kl_divergence(N_1,N_1_n))
 W_g=W_g_ce+lam*W_g_kl
 
+
 #Cross entropy loss for discriminator
 W_d_real=tf.reduce_mean(input_tensor=tf.nn.sigmoid_cross_entropy_with_logits(logits=Dx,labels=tf.ones_like(Dx)-0.1))
 W_d_fake=tf.reduce_mean(input_tensor=tf.nn.sigmoid_cross_entropy_with_logits(logits=Dg,labels=tf.zeros_like(Dg)+0.1))
