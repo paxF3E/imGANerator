@@ -16,9 +16,9 @@ def generate_batch(BATCH_SIZE):
     real_images=np.empty(shape=[BATCH_SIZE,64,64,3]) # prep ndarray for images
     encoded_sentence=np.empty(shape=[BATCH_SIZE,4800]) # prep ndarray for encoded sentences
     for i in range(len(batch)):
-        real_images[i]=Image.open(r'Data/val2017/'+batch[i][:-4]+'.png').convert('RGB').resize((64,64))
+        real_images[i]=Image.open(r'Data/train2017/'+batch[i][:-4]+'.png').convert('RGB').resize((64,64))
         # resize to 560x560 and RGB
-        sentence_list=np.load('Data/encoded_vector/val_annotations/'+batch[i][:-4]+'.npy')
+        sentence_list=np.load('Data/encoded_vector/train_annotations/'+batch[i][:-4]+'.npy')
         encoded_sentence[i] = sentence_list[random.randint(0,np.shape(sentence_list)[0]-1)]
     return real_images,encoded_sentence
 
@@ -163,48 +163,55 @@ arbitary_caption_tensor = tf.compat.v1.placeholder(tf.float32, shape=[BATCH_SIZE
 training_flag = tf.compat.v1.placeholder(tf.bool, name='training_flag')
 
 
-## generating images from caption encoding and random noise from generator
-generated_img_tensor, mu1, sd1 = generator(batch_size=BATCH_SIZE, noise_len=NOISE_LEN, encoded_caption_tensor=encoded_caption_tensor, training_flag=training_flag, reuse=False)
+with tf.GradientTape(persistent=True) as tape:
+    ## generating images from caption encoding and random noise from generator
+    generated_img_tensor, mu1, sd1 = generator(batch_size=BATCH_SIZE, noise_len=NOISE_LEN, encoded_caption_tensor=encoded_caption_tensor, training_flag=training_flag, reuse=False)
 
-## passing the generated images, real image with real descriptions and real image with arbitary descriptions to the discriminator
-Dg = discriminator(generated_img_tensor, encoded_caption_tensor, False)
-Dx = discriminator(real_image_tensor, encoded_caption_tensor, True)
-Db = discriminator(real_image_tensor, arbitary_caption_tensor, True)
-
-
-## cross entropy loss for the generator
-W_g_ce = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=Dg, labels=tf.ones_like(Dg)-0.1))
-
-# KLDivergence loss for the conditioned latent variable
-N1 = tf.compat.v1.distributions.Normal(mu1, sd1)
-N1_n = tf.compat.v1.distributions.Normal(tf.zeros([1,128]), tf.ones([1,128]))
-W_g_kl = tf.reduce_mean(input_tensor=tf.compat.v1.distributions.kl_divergence(N1, N1_n))
-W_g = W_g_ce + 2.0*W_g_kl # 2.0 divergence loss for lagrangian multiplier
+    ## passing the generated images, real image with real descriptions and real image with arbitary descriptions to the discriminator
+    Dg = discriminator(generated_img_tensor, encoded_caption_tensor, False)
+    Dx = discriminator(real_image_tensor, encoded_caption_tensor, True)
+    Db = discriminator(real_image_tensor, arbitary_caption_tensor, True)
 
 
-## cross entropy loss for the discriminator
-W_d_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=Dx, labels=tf.ones_like(Dx)-0.1))
-W_d_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=Dg, labels=tf.zeros_like(Dg)+0.1))
-W_d_arbitary = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=Db, labels=tf.zeros_like(Db)+0.1))
-W_d = W_d_real + W_d_fake + W_d_arbitary
+    ## cross entropy loss for the generator
+    W_g_ce = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=Dg, labels=tf.ones_like(Dg)-0.1))
+
+    # KLDivergence loss for the conditioned latent variable
+    N1 = tf.compat.v1.distributions.Normal(mu1, sd1)
+    N1_n = tf.compat.v1.distributions.Normal(tf.zeros([1,128]), tf.ones([1,128]))
+    W_g_kl = tf.reduce_mean(input_tensor=tf.compat.v1.distributions.kl_divergence(N1, N1_n))
+    W_g = W_g_ce + 2.0*W_g_kl # 2.0 divergence loss for lagrangian multiplier
 
 
-## preparing optimizers
-trainable_vars = tf.compat.v1.trainable_variables()
-generator_variables = [var for var in trainable_vars if 'g_' in var.name]
-discriminator_variables = [var for var in trainable_vars if 'd_' in var.name]
-variable_names = [v.name for v in tf.compat.v1.trainable_variables()]
+    ## cross entropy loss for the discriminator
+    W_d_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=Dx, labels=tf.ones_like(Dx)-0.1))
+    W_d_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=Dg, labels=tf.zeros_like(Dg)+0.1))
+    W_d_arbitary = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=Db, labels=tf.zeros_like(Db)+0.1))
+    W_d = W_d_real + W_d_fake + W_d_arbitary
+    
+
+    ## preparing optimizers
+    trainable_vars = tf.compat.v1.trainable_variables()
+    generator_variables = [var for var in trainable_vars if 'g_' in var.name]
+    discriminator_variables = [var for var in trainable_vars if 'd_' in var.name]
+    variable_names = [v.name for v in tf.compat.v1.trainable_variables()]
+
+    '''
+        use GradientTape for optimization, as when loss function is provided, it is required.
+        last edit : fixing this optimization failure in above code block
+        in case is lost: https://medium.com/practical-coding/from-minimize-to-tf-gradienttape-58a1aae6ce26
+    '''
+
+d_gradients = tape.gradient(W_d, sources=discriminator_variables)
+g_gradients = tape.gradient(W_g, sources=generator_variables)
 
 update_optimizer = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)
 with tf.control_dependencies(update_optimizer):
-    d_optimizer = tf.keras.optimizers.Adam(learning_rate=25e-6, beta_1=0.5).minimize(W_d, var_list=discriminator_variables, tape=tf.GradientTape())
-    g_optimizer = tf.keras.optimizers.Adam(learning_rate=25e-6, beta_1=0.5).minimize(W_g, var_list=generator_variables, tape=tf.GradientTape())
-'''
-    use GradientTape for optimization, as when loss function is provided, it is required.
-    last edit : fixing this optimization failure in above code block
-'''
+    d_optimizer = tf.keras.optimizers.Adam(learning_rate=25e-6, beta_1=0.5).apply_gradients(zip(d_gradients, discriminator_variables))
+    g_optimizer = tf.keras.optimizers.Adam(learning_rate=25e-6, beta_1=0.5).apply_gradients(zip(g_gradients, generator_variables))
 
-## initializing generator and discriminator
+
+## initializing sessions and checkpointing
 config = tf.compat.v1.ConfigProto()
 config.allow_soft_placement = True
 session = tf.compat.v1.Session(config=config)
