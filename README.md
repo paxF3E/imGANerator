@@ -1,6 +1,7 @@
 # T2I-Service
 API served service to generate images from text captions 
 
+- `dcganimp1.py` rewritten code with tf v2, Tape and some other twweaks
 - `dcganv1.py` forked implementation, build using CUDA, NVidia drivers and tensorflow v1
 - `dcganv2.py` modified version with tensorflow v2 compatibility and executable for an AMD machine
 - `skipthoughts.py` main code for `skipthoughts` encoding; including assest dictionaries from `Data/skipthougts` (gitignored; can be downloaded from <https://github.com/ryankiros/skip-thoughts>)
